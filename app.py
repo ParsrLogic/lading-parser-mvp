@@ -3,15 +3,48 @@ import pdfplumber
 import pandas as pd
 import re
 
-st.set_page_config(page_title="Bill of Lading Parser - V0.3.2")
-st.title("Bill of Lading Parser - V0.3.2")
+# ---------------- PAGE CONFIG ----------------
+st.set_page_config(
+    page_title="Bill of Lading to CSV Converter (Beta)",
+    page_icon="📄",  # simple, pro, sans dépendance externe
+    layout="centered"
+)
+
+# ---------------- SIDEBAR ----------------
+st.sidebar.header("How to use")
+st.sidebar.markdown(
+    """
+    **1. Upload PDF**  
+    Upload a native Bill of Lading (text-based PDF).
+
+    **2. Check preview**  
+    Review extracted key fields.
+
+    **3. Download CSV**  
+    Export clean data for Excel or ERP.
+    """
+)
+
+st.sidebar.header("Privacy & Security")
+st.sidebar.info(
+    "Your files are processed in RAM and never stored. "
+    "They are deleted immediately after processing."
+)
+
+# ---------------- MAIN TITLE ----------------
+st.title("Bill of Lading to CSV Converter (Beta)")
+st.subheader(
+    "Extract Shipper, Consignee & Weight in seconds. No signup required."
+)
+
+st.markdown("---")
 
 uploaded_file = st.file_uploader(
-    "Upload a Bill of Lading PDF",
+    "Upload your Bill of Lading (PDF only)",
     type=["pdf"]
 )
 
-# ---------- UTILITIES ----------
+# ---------------- EXTRACTION UTILITIES ----------------
 
 COMPANY_SUFFIXES = [
     "LTD", "LIMITED", "LLC", "PVT", "PVT LTD", "INC",
@@ -43,9 +76,7 @@ def extract_company_name(block: str) -> str:
         if not clean:
             continue
 
-        # Heuristic: must contain a legal company suffix
         if any(suffix in clean for suffix in COMPANY_SUFFIXES):
-            # Cut everything after the company name
             for suffix in COMPANY_SUFFIXES:
                 if suffix in clean:
                     idx = clean.find(suffix) + len(suffix)
@@ -68,14 +99,14 @@ def extract_gross_weight(text):
     return match.group(1) + " KG" if match else ""
 
 
-# ---------- MAIN ----------
+# ---------------- MAIN LOGIC ----------------
 
 if uploaded_file is not None:
     with pdfplumber.open(uploaded_file) as pdf:
         raw_text = pdf.pages[0].extract_text()
 
     if not raw_text:
-        st.error("Impossible d'extraire le texte.")
+        st.warning("No readable text detected in this PDF.")
     else:
         shipper_block = extract_block(raw_text, "Shipper", "Consignee")
         consignee_block = extract_block(raw_text, "Consignee", "Notify Party")
@@ -88,8 +119,8 @@ if uploaded_file is not None:
 
         df = pd.DataFrame({
             "Field": [
-                "Shipper (Name)",
-                "Consignee (Name)",
+                "Shipper",
+                "Consignee",
                 "Container Number",
                 "Gross Weight"
             ],
@@ -101,14 +132,22 @@ if uploaded_file is not None:
             ]
         })
 
-        st.subheader("Données extraites (V0.3.2)")
+        st.success("Extraction completed")
         st.dataframe(df, use_container_width=True)
 
         csv = df.to_csv(index=False).encode("utf-8")
 
         st.download_button(
-            label="Télécharger en CSV",
+            label="Download CSV",
             data=csv,
-            file_name="bill_of_lading_extracted_v03_2.csv",
+            file_name="bill_of_lading_extracted_v04.csv",
             mime="text/csv"
         )
+
+# ---------------- LEGAL DISCLAIMER ----------------
+st.markdown("---")
+st.caption(
+    "Legal Disclaimer: This tool is provided 'as is' without warranty of any kind. "
+    "The user assumes all responsibility for the accuracy of the extracted data. "
+    "ParsrLogic is not liable for any errors or omissions."
+)
