@@ -31,6 +31,17 @@ st.sidebar.info(
     "They are deleted immediately after processing."
 )
 
+st.sidebar.header("Optimized for Major Carriers")
+st.sidebar.markdown(
+    """
+    • **Maersk Line**  
+    • **MSC (Mediterranean Shipping Company)**  
+    • **CMA CGM**  
+    • **COSCO Shipping**  
+    • **Hapag-Lloyd**
+    """
+)
+
 # ---------------- MAIN TITLE ----------------
 st.title("Bill of Lading to CSV Converter (Beta)")
 st.subheader(
@@ -146,8 +157,20 @@ if uploaded_file is not None:
         st.download_button(
             label="Download CSV",
             data=csv,
-            file_name="bill_of_lading_extracted_v05_1.csv",
+            file_name="bill_of_lading_extracted_v05_2.csv",
             mime="text/csv"
+        )
+
+        # -------- SEO / TRUST SECTION (MAIN CONTENT) --------
+        st.markdown("### Optimized for Major Carriers")
+        st.markdown(
+            """
+            • **Maersk Line**  
+            • **MSC (Mediterranean Shipping Company)**  
+            • **CMA CGM**  
+            • **COSCO Shipping**  
+            • **Hapag-Lloyd**
+            """
         )
 
     except Exception:
@@ -165,8 +188,11 @@ if uploaded_file is not None:
             f"[Request support for this format]({mailto_link})"
         )
 
-# ---------------- LEGAL DISCLAIMER ----------------
+# ---------------- FOOTER ----------------
 st.markdown("---")
+st.caption(
+    "Universal parser compatible with standard PDF formats from major global freight forwarders."
+)
 st.caption(
     "Legal Disclaimer: This tool is provided 'as is' without warranty of any kind. "
     "The user assumes all responsibility for the accuracy of the extracted data. "
