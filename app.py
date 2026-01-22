@@ -6,7 +6,7 @@ import re
 # ---------------- PAGE CONFIG ----------------
 st.set_page_config(
     page_title="Bill of Lading to CSV Converter (Beta)",
-    page_icon="📄",  # simple, pro, sans dépendance externe
+    page_icon="📄",
     layout="centered"
 )
 
@@ -51,6 +51,8 @@ COMPANY_SUFFIXES = [
     "GMBH", "SAS", "SA", "BV", "SRL", "SPA"
 ]
 
+SUPPORT_EMAIL = "ParsrLogic@proton.me"
+
 
 def normalize_line(line: str) -> str:
     line = re.sub(r"[^\x20-\x7E]", "", line)
@@ -72,7 +74,6 @@ def extract_company_name(block: str) -> str:
 
     for line in lines:
         clean = normalize_line(line).upper()
-
         if not clean:
             continue
 
@@ -99,20 +100,24 @@ def extract_gross_weight(text):
     return match.group(1) + " KG" if match else ""
 
 
-# ---------------- MAIN LOGIC ----------------
+# ---------------- MAIN LOGIC (SECURED) ----------------
 
 if uploaded_file is not None:
-    with pdfplumber.open(uploaded_file) as pdf:
-        raw_text = pdf.pages[0].extract_text()
+    try:
+        with pdfplumber.open(uploaded_file) as pdf:
+            raw_text = pdf.pages[0].extract_text()
 
-    if not raw_text:
-        st.warning("No readable text detected in this PDF.")
-    else:
+        if not raw_text:
+            raise ValueError("No readable text")
+
         shipper_block = extract_block(raw_text, "Shipper", "Consignee")
         consignee_block = extract_block(raw_text, "Consignee", "Notify Party")
 
         shipper_name = extract_company_name(shipper_block)
         consignee_name = extract_company_name(consignee_block)
+
+        if not shipper_name or not consignee_name:
+            raise ValueError("Missing critical fields")
 
         container_no = extract_container_number(raw_text)
         gross_weight = extract_gross_weight(raw_text)
@@ -140,8 +145,23 @@ if uploaded_file is not None:
         st.download_button(
             label="Download CSV",
             data=csv,
-            file_name="bill_of_lading_extracted_v04.csv",
+            file_name="bill_of_lading_extracted_v05.csv",
             mime="text/csv"
+        )
+
+    except Exception:
+        st.warning(
+            "We couldn't detect the data automatically. "
+            "This Bill of Lading format might be new to our system."
+        )
+
+        mailto_link = (
+            f"mailto:{SUPPORT_EMAIL}"
+            f"?subject=New%20Format%20Request"
+        )
+
+        st.markdown(
+            f"[Request support for this format]({mailto_link})"
         )
 
 # ---------------- LEGAL DISCLAIMER ----------------
