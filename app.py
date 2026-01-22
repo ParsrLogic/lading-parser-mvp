@@ -100,7 +100,7 @@ def extract_gross_weight(text):
     return match.group(1) + " KG" if match else ""
 
 
-# ---------------- MAIN LOGIC (SECURED) ----------------
+# ---------------- MAIN LOGIC (SECURED + NO SILENT FAIL) ----------------
 
 if uploaded_file is not None:
     try:
@@ -116,8 +116,9 @@ if uploaded_file is not None:
         shipper_name = extract_company_name(shipper_block)
         consignee_name = extract_company_name(consignee_block)
 
+        # ---- CRITICAL VALIDATION ----
         if not shipper_name or not consignee_name:
-            raise ValueError("Missing critical fields")
+            raise ValueError("Critical fields missing")
 
         container_no = extract_container_number(raw_text)
         gross_weight = extract_gross_weight(raw_text)
@@ -145,7 +146,7 @@ if uploaded_file is not None:
         st.download_button(
             label="Download CSV",
             data=csv,
-            file_name="bill_of_lading_extracted_v05.csv",
+            file_name="bill_of_lading_extracted_v05_1.csv",
             mime="text/csv"
         )
 
