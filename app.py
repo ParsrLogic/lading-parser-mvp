@@ -230,3 +230,11 @@ st.caption(
     "The user assumes all responsibility for the accuracy of the extracted data. "
     "ParsrLogic is not liable for any errors or omissions."
 )
+
+metrics = load_metrics()
+
+st.caption(
+    f"Usage stats — uploads: {metrics['uploads']} | "
+    f"success: {metrics['success']} | "
+    f"fail: {metrics['fail']}"
+)
