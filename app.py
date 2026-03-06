@@ -2,6 +2,8 @@ import streamlit as st
 import pdfplumber
 import pandas as pd
 import re
+import json
+import os
 
 # ---------------- PAGE CONFIG ----------------
 st.set_page_config(
@@ -54,6 +56,22 @@ uploaded_file = st.file_uploader(
     "Upload your Bill of Lading (PDF only)",
     type=["pdf"]
 )
+
+# ---------------- METRICS ----------------
+
+METRICS_FILE = "metrics.json"
+
+def load_metrics():
+    if not os.path.exists(METRICS_FILE):
+        return {"uploads": 0, "success": 0, "fail": 0}
+
+    with open(METRICS_FILE, "r") as f:
+        return json.load(f)
+
+
+def save_metrics(metrics):
+    with open(METRICS_FILE, "w") as f:
+        json.dump(metrics, f)
 
 # ---------------- EXTRACTION UTILITIES ----------------
 
@@ -114,6 +132,11 @@ def extract_gross_weight(text):
 # ---------------- MAIN LOGIC (SECURED + NO SILENT FAIL) ----------------
 
 if uploaded_file is not None:
+
+    metrics = load_metrics()
+    metrics["uploads"] += 1
+    save_metrics(metrics)
+    
     try:
         with pdfplumber.open(uploaded_file) as pdf:
             raw_text = pdf.pages[0].extract_text()
@@ -149,6 +172,10 @@ if uploaded_file is not None:
             ]
         })
 
+        metrics = load_metrics()
+        metrics["success"] += 1
+        save_metrics(metrics)
+
         st.success("Extraction completed")
         st.dataframe(df, use_container_width=True)
 
@@ -174,6 +201,11 @@ if uploaded_file is not None:
         )
 
     except Exception:
+
+        metrics = load_metrics()
+        metrics["fail"] += 1
+        save_metrics(metrics)
+
         st.warning(
             "We couldn't detect the data automatically. "
             "This Bill of Lading format might be new to our system."
