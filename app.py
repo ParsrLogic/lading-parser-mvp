@@ -7,7 +7,7 @@ import os
 
 # ---------------- PAGE CONFIG ----------------
 st.set_page_config(
-    page_title="Bill of Lading to CSV Converter (Beta)",
+    page_title="Bill of Lading Parser (Experimental Tool)",
     page_icon="📄",
     layout="centered"
 )
@@ -16,44 +16,37 @@ st.set_page_config(
 st.sidebar.header("How to use")
 st.sidebar.markdown(
     """
-    **1. Upload PDF**  
-    Upload a native Bill of Lading (text-based PDF).
-
-    **2. Check preview**  
-    Review extracted key fields.
-
-    **3. Download CSV**  
-    Export clean data for Excel or ERP.
+    1. Upload PDF  
+    2. Check preview  
+    3. Download CSV
     """
 )
 
 st.sidebar.header("Privacy & Security")
 st.sidebar.info(
-    "Your files are processed in RAM and never stored. "
-    "They are deleted immediately after processing."
+    "Files are processed temporarily in memory (RAM) and not stored."
 )
 
-st.sidebar.header("Optimized for Major Carriers")
-st.sidebar.markdown(
-    """
-    • **Maersk Line**  
-    • **MSC (Mediterranean Shipping Company)**  
-    • **CMA CGM**  
-    • **COSCO Shipping**  
-    • **Hapag-Lloyd**
-    """
+st.sidebar.warning(
+    "No user support provided. This is an experimental tool."
 )
 
 # ---------------- MAIN TITLE ----------------
-st.title("Bill of Lading to CSV Converter (Beta)")
+st.title("Bill of Lading Parser (Experimental Tool)")
+
 st.subheader(
-    "Extract Shipper, Consignee & Weight in seconds. No signup required."
+    "Automated data extraction from PDF. Output provided as raw indicative data."
+)
+
+# ---------------- VEILLE BANNER ----------------
+st.warning(
+    "Projet en test — non maintenu — sans garantie de disponibilité"
 )
 
 st.markdown("---")
 
 uploaded_file = st.file_uploader(
-    "Upload your Bill of Lading (PDF only)",
+    "Upload PDF (Bill of Lading)",
     type=["pdf"]
 )
 
@@ -129,7 +122,7 @@ def extract_gross_weight(text):
     return match.group(1) + " KG" if match else ""
 
 
-# ---------------- MAIN LOGIC (SECURED + NO SILENT FAIL) ----------------
+# ---------------- MAIN LOGIC ----------------
 
 if uploaded_file is not None:
 
@@ -150,7 +143,6 @@ if uploaded_file is not None:
         shipper_name = extract_company_name(shipper_block)
         consignee_name = extract_company_name(consignee_block)
 
-        # ---- CRITICAL VALIDATION ----
         if not shipper_name or not consignee_name:
             raise ValueError("Critical fields missing")
 
@@ -176,7 +168,6 @@ if uploaded_file is not None:
         metrics["success"] += 1
         save_metrics(metrics)
 
-        st.success("Extraction completed")
         st.dataframe(df, use_container_width=True)
 
         csv = df.to_csv(index=False).encode("utf-8")
@@ -184,20 +175,8 @@ if uploaded_file is not None:
         st.download_button(
             label="Download CSV",
             data=csv,
-            file_name="bill_of_lading_extracted_v05_2.csv",
+            file_name="bill_of_lading_extracted.csv",
             mime="text/csv"
-        )
-
-        # -------- SEO / TRUST SECTION (MAIN CONTENT) --------
-        st.markdown("### Optimized for Major Carriers")
-        st.markdown(
-            """
-            • **Maersk Line**  
-            • **MSC (Mediterranean Shipping Company)**  
-            • **CMA CGM**  
-            • **COSCO Shipping**  
-            • **Hapag-Lloyd**
-            """
         )
 
     except Exception:
@@ -207,8 +186,7 @@ if uploaded_file is not None:
         save_metrics(metrics)
 
         st.warning(
-            "We couldn't detect the data automatically. "
-            "This Bill of Lading format might be new to our system."
+            "Extraction failed. Format may not be supported."
         )
 
         mailto_link = (
@@ -217,18 +195,19 @@ if uploaded_file is not None:
         )
 
         st.markdown(
-            f"[Request support for this format]({mailto_link})"
+            f"[Request format support]({mailto_link})"
         )
 
 # ---------------- FOOTER ----------------
 st.markdown("---")
+
 st.caption(
-    "Universal parser compatible with standard PDF formats from major global freight forwarders."
-)
-st.caption(
-    "Legal Disclaimer: This tool is provided 'as is' without warranty of any kind. "
-    "The user assumes all responsibility for the accuracy of the extracted data. "
-    "ParsrLogic is not liable for any errors or omissions."
+    "Parsr Logic is an experimental technical data conversion utility. "
+    "No carrier-specific logic is implemented. Extracted data is indicative only "
+    "and provided without any guarantee of accuracy. The user is solely responsible "
+    "for verification, validation and use of the data. The publisher declines all "
+    "liability for extraction errors, omissions, unsupported formats or any direct "
+    "or indirect damage resulting from use of this service."
 )
 
 metrics = load_metrics()
